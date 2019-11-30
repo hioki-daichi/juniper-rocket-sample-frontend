@@ -1,4 +1,5 @@
 use yew::prelude::*;
+use yew::services::ConsoleService;
 
 fn main() {
     yew::start_app::<Model>();
@@ -6,6 +7,7 @@ fn main() {
 
 struct Model {
     i: u8,
+    console: ConsoleService,
 }
 
 enum Msg {
@@ -17,10 +19,15 @@ impl Component for Model {
     type Properties = ();
 
     fn create(_: Self::Properties, _component_link: ComponentLink<Self>) -> Self {
-        Model { i: 0 }
+        Model {
+            i: 0,
+            console: ConsoleService::new(),
+        }
     }
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
+        self.console.log(self.i.to_string().as_str());
+
         match msg {
             Msg::Increment => self.i += 1,
         }
