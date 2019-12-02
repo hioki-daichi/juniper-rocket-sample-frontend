@@ -88,7 +88,7 @@ impl Component for Model {
         html! {
             <div class="container mx-auto">
                 <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onclick=|_| Msg::GetVideos>{ "Get Videos" }</button>
-                {{ self.videos.iter().map(|video| self.video_view(video)).collect::<VNode<Model>>() }}
+                { for self.videos.iter().map(|video| self.video_view(video)) }
             </div>
         }
     }
