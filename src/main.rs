@@ -10,7 +10,6 @@ use video::response::VideosResponse;
 use yew::format::Json;
 use yew::prelude::*;
 use yew::services::{fetch, ConsoleService, FetchService};
-use yew::virtual_dom::VNode;
 
 fn main() {
     yew::start_app::<Model>();
