@@ -33,11 +33,11 @@ impl Component for Model {
     type Message = Msg;
     type Properties = ();
 
-    fn create(_: Self::Properties, component_link: ComponentLink<Self>) -> Self {
+    fn create(_: Self::Properties, link: ComponentLink<Self>) -> Self {
         Model {
             videos: vec![],
             console: ConsoleService::new(),
-            link: component_link,
+            link,
             fetch_service: FetchService::new(),
             fetch_task: None,
         }
