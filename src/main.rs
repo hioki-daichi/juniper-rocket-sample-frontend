@@ -9,7 +9,9 @@ use video::model::Video;
 use video::response::VideosResponse;
 use yew::format::Json;
 use yew::prelude::*;
+use yew::services::reader::{FileData, ReaderService, ReaderTask};
 use yew::services::{fetch, ConsoleService, FetchService};
+use yew::ChangeData;
 
 fn main() {
     yew::start_app::<Model>();
@@ -21,12 +23,16 @@ struct Model {
     link: ComponentLink<Model>,
     fetch_service: FetchService,
     fetch_task: Option<fetch::FetchTask>,
+    reader_service: ReaderService,
+    reader_tasks: Vec<ReaderTask>,
 }
 
 enum Msg {
     GetVideos,
     GetVideosSuccess(Vec<Video>),
     GetVideosFailure,
+    ChooseFile(ChangeData),
+    LoadedFile(FileData),
 }
 
 impl Component for Model {
@@ -40,6 +46,8 @@ impl Component for Model {
             link,
             fetch_service: FetchService::new(),
             fetch_task: None,
+            reader_service: ReaderService::new(),
+            reader_tasks: vec![],
         }
     }
 
@@ -78,6 +86,23 @@ impl Component for Model {
 
                 self.videos = vec![];
             }
+
+            Msg::ChooseFile(change_data) => {
+                if let ChangeData::Files(files) = change_data {
+                    for file in files {
+                        self.reader_tasks.push(
+                            self.reader_service
+                                .read_file(file, self.link.send_back(move |v| Msg::LoadedFile(v))),
+                        );
+                    }
+                }
+            }
+
+            Msg::LoadedFile(file_data) => {
+                let video = Video::new(file_data);
+                self.videos.push(video);
+                // TODO: Send Video Mutation Request
+            }
         }
 
         true
@@ -87,6 +112,7 @@ impl Component for Model {
         html! {
             <div class="container mx-auto">
                 <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onclick=|_| Msg::GetVideos>{ "Get Videos" }</button>
+                <input type="file" onchange = |change_data| Msg::ChooseFile(change_data) />
                 { for self.videos.iter().map(|video| self.video_view(video)) }
             </div>
         }
