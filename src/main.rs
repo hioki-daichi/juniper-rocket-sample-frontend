@@ -9,8 +9,11 @@ use video::model::Video;
 use video::response::VideosResponse;
 use yew::format::Json;
 use yew::prelude::*;
-use yew::services::reader::{FileData, ReaderService, ReaderTask};
-use yew::services::{fetch, ConsoleService, FetchService};
+use yew::services::{
+    fetch::{FetchService, FetchTask, Response},
+    reader::{FileData, ReaderService, ReaderTask},
+    ConsoleService,
+};
 use yew::ChangeData;
 
 fn main() {
@@ -18,13 +21,14 @@ fn main() {
 }
 
 struct Model {
-    videos: Vec<Video>,
-    console: ConsoleService,
     link: ComponentLink<Model>,
-    fetch_service: FetchService,
-    fetch_task: Option<fetch::FetchTask>,
+    #[allow(dead_code)]
+    console: ConsoleService,
     reader_service: ReaderService,
     reader_tasks: Vec<ReaderTask>,
+    fetch_service: FetchService,
+    fetch_task: Option<FetchTask>,
+    videos: Vec<Video>,
 }
 
 enum Msg {
@@ -41,28 +45,25 @@ impl Component for Model {
 
     fn create(_: Self::Properties, link: ComponentLink<Self>) -> Self {
         Model {
-            videos: vec![],
-            console: ConsoleService::new(),
             link,
-            fetch_service: FetchService::new(),
-            fetch_task: None,
+            console: ConsoleService::new(),
             reader_service: ReaderService::new(),
             reader_tasks: vec![],
+            fetch_service: FetchService::new(),
+            fetch_task: None,
+            videos: vec![],
         }
     }
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
             Msg::GetVideos => {
-                self.console.log("Msg::GetVideos");
-
                 let data = json!({ "query": "{ videos { src } }" });
+
                 let request = build_request(&data);
 
                 let callback = self.link.send_back(
-                    move |response: fetch::Response<
-                        Json<Result<ResponseData<VideosResponse>, Error>>,
-                    >| {
+                    move |response: Response<Json<Result<ResponseData<VideosResponse>, Error>>>| {
                         let (meta, Json(response_body)) = response.into_parts();
                         if meta.status.is_success() {
                             Msg::GetVideosSuccess(response_body.unwrap().data.videos)
@@ -72,28 +73,27 @@ impl Component for Model {
                     },
                 );
 
-                self.fetch_task = Some(self.fetch_service.fetch(request, callback));
+                let fetch_task = self.fetch_service.fetch(request, callback);
+
+                self.fetch_task = Some(fetch_task);
             }
 
             Msg::GetVideosSuccess(videos) => {
-                self.console.log("Msg::GetVideosSuccess");
-
                 self.videos = videos;
             }
 
             Msg::GetVideosFailure => {
-                self.console.log("Msg::GetVideosFailure");
-
                 self.videos = vec![];
             }
 
             Msg::ChooseFile(change_data) => {
                 if let ChangeData::Files(files) = change_data {
                     for file in files {
-                        self.reader_tasks.push(
-                            self.reader_service
-                                .read_file(file, self.link.send_back(move |v| Msg::LoadedFile(v))),
-                        );
+                        let callback = self
+                            .link
+                            .send_back(move |file_data| Msg::LoadedFile(file_data));
+                        let reader_task = self.reader_service.read_file(file, callback);
+                        self.reader_tasks.push(reader_task);
                     }
                 }
             }
