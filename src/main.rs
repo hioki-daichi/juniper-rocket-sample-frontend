@@ -113,14 +113,14 @@ impl Component for Model {
             <div class="container mx-auto">
                 <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onclick=|_| Msg::GetVideos>{ "Get Videos" }</button>
                 <input type="file" onchange = |change_data| Msg::ChooseFile(change_data) />
-                { for self.videos.iter().map(|video| self.video_view(video)) }
+                { for self.videos.iter().map(|video| self.view_video(video)) }
             </div>
         }
     }
 }
 
 impl Model {
-    fn video_view(&self, video: &Video) -> Html<Self> {
+    fn view_video(&self, video: &Video) -> Html<Self> {
         html! {
             <video class="w-full" autoplay=true muted=true loop=true playsinline=true>
                 <source src={video.src.as_str()} />
