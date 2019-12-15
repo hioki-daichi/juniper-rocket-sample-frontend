@@ -36,7 +36,7 @@ enum Msg {
     GetVideosCompleted(Vec<Video>),
     GetVideosFailed,
     ChooseFile(ChangeData),
-    LoadedFile(FileData),
+    FileLoaded(FileData),
     RegisterVideoCompleted(Video),
     RegisterVideoFailed,
 }
@@ -93,14 +93,14 @@ impl Component for Model {
                     for file in files {
                         let callback = self
                             .link
-                            .send_back(move |file_data| Msg::LoadedFile(file_data));
+                            .send_back(move |file_data| Msg::FileLoaded(file_data));
                         let reader_task = self.reader_service.read_file(file, callback);
                         self.reader_tasks.push(reader_task);
                     }
                 }
             }
 
-            Msg::LoadedFile(file_data) => {
+            Msg::FileLoaded(file_data) => {
                 let key = file_data.clone().name;
                 let encoded_data = base64::encode(&file_data.content);
 
