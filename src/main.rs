@@ -6,7 +6,7 @@ use common::response::ResponseData;
 use failure::Error;
 use serde_json::json;
 use video::model::Video;
-use video::response::VideosResponse;
+use video::response::{RegisterVideoResponse, VideosResponse};
 use yew::format::Json;
 use yew::prelude::*;
 use yew::services::{
@@ -37,6 +37,8 @@ enum Msg {
     GetVideosFailure,
     ChooseFile(ChangeData),
     LoadedFile(FileData),
+    RegisterVideoCompleted(Video),
+    RegisterVideoFailed,
 }
 
 impl Component for Model {
@@ -99,10 +101,44 @@ impl Component for Model {
             }
 
             Msg::LoadedFile(file_data) => {
-                let video = Video::new(file_data);
-                self.videos.push(video);
-                // TODO: Send Video Mutation Request
+                let key = file_data.clone().name;
+                let encoded_data = base64::encode(&file_data.content);
+
+                let data = json!({
+                    "query":
+                        format!(
+                            "mutation {{ registerVideo(key: \"{}\", data: \"{}\") {{ src }} }}",
+                            key, encoded_data
+                        )
+                });
+
+                let request = build_request(&data);
+
+                let callback = self.link.send_back(
+                    move |response: Response<
+                        Json<Result<ResponseData<RegisterVideoResponse>, Error>>,
+                    >| {
+                        let (meta, Json(response_body)) = response.into_parts();
+                        if meta.status.is_success() {
+                            Msg::RegisterVideoCompleted(response_body.unwrap().data.registerVideo)
+                        } else {
+                            Msg::RegisterVideoFailed
+                        }
+                    },
+                );
+
+                let fetch_task = self.fetch_service.fetch(request, callback);
+
+                self.fetch_task = Some(fetch_task);
             }
+
+            Msg::RegisterVideoCompleted(video) => {
+                self.console.log("RegisterVideoCompleted");
+
+                self.videos.push(video);
+            }
+
+            Msg::RegisterVideoFailed => self.console.log("RegisterVideoFailed"),
         }
 
         true
