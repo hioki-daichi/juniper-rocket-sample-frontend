@@ -34,7 +34,7 @@ struct Model {
 enum Msg {
     GetVideos,
     GetVideosSuccess(Vec<Video>),
-    GetVideosFailure,
+    GetVideosFailed,
     ChooseFile(ChangeData),
     LoadedFile(FileData),
     RegisterVideoCompleted(Video),
@@ -70,7 +70,7 @@ impl Component for Model {
                         if meta.status.is_success() {
                             Msg::GetVideosSuccess(response_body.unwrap().data.videos)
                         } else {
-                            Msg::GetVideosFailure
+                            Msg::GetVideosFailed
                         }
                     },
                 );
@@ -84,7 +84,7 @@ impl Component for Model {
                 self.videos = videos;
             }
 
-            Msg::GetVideosFailure => {
+            Msg::GetVideosFailed => {
                 self.videos = vec![];
             }
 
