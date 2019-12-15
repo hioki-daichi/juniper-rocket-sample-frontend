@@ -33,7 +33,7 @@ struct Model {
 
 enum Msg {
     GetVideos,
-    GetVideosSuccess(Vec<Video>),
+    GetVideosCompleted(Vec<Video>),
     GetVideosFailed,
     ChooseFile(ChangeData),
     LoadedFile(FileData),
@@ -68,7 +68,7 @@ impl Component for Model {
                     move |response: Response<Json<Result<ResponseData<VideosResponse>, Error>>>| {
                         let (meta, Json(response_body)) = response.into_parts();
                         if meta.status.is_success() {
-                            Msg::GetVideosSuccess(response_body.unwrap().data.videos)
+                            Msg::GetVideosCompleted(response_body.unwrap().data.videos)
                         } else {
                             Msg::GetVideosFailed
                         }
@@ -80,7 +80,7 @@ impl Component for Model {
                 self.fetch_task = Some(fetch_task);
             }
 
-            Msg::GetVideosSuccess(videos) => {
+            Msg::GetVideosCompleted(videos) => {
                 self.videos = videos;
             }
 
