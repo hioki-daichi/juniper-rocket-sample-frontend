@@ -1,1 +1,1 @@
-frontend: sh -c "cargo web start"
+frontend: sh -c "cargo web start --auto-reload"
